@@ -17,15 +17,6 @@ module.exports = async (req, res) => {
   const { method, query } = req;
 
   try {
-    // ✅ GET /api/influencers?health=true → basic health check
-    if (method === 'GET' && query.health === 'true') {
-      return res.status(200).json({
-        status: 'ok',
-        service: 'Swaykart Influencer API',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
     // ✅ GET /api/influencers → fetch all influencers
     if (method === 'GET' && !query.id) {
       const result = await pool.query(
@@ -47,7 +38,7 @@ module.exports = async (req, res) => {
 
       const influencer = result.rows[0];
 
-      // Safe parse of JSON-wrapped analysis field
+      // Parse AI analysis safely if it's wrapped in markdown
       if (influencer.ai_analysis && influencer.ai_analysis.startsWith('```json')) {
         try {
           const jsonString = influencer.ai_analysis
