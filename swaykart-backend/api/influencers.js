@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
-const { Pool } = require('pg'); // Reverted to require()
+import pkg from 'pg';
+const { Pool } = pkg;
 
 // PostgreSQL connection pool
 const pool = new Pool({
@@ -13,7 +14,7 @@ const pool = new Pool({
   },
 });
 
-module.exports = async (req, res) => { // Reverted to module.exports
+export default async (req, res) => {
   const { method, query } = req;
 
   try {
@@ -55,7 +56,6 @@ module.exports = async (req, res) => { // Reverted to module.exports
 
     // ❌ Unsupported method
     return res.status(405).json({ error: 'Method not allowed' });
-
   } catch (err) {
     console.error('API error:', err);
     return res.status(500).json({ error: 'Internal server error' });
