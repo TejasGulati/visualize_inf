@@ -1,6 +1,5 @@
-// Importing with ESM syntax
-import pg from 'pg';
-const { Pool } = pg;
+/* eslint-disable no-undef */
+import { Pool } from 'pg'; // Changed from require() to import
 
 // PostgreSQL connection pool
 const pool = new Pool({
@@ -14,8 +13,7 @@ const pool = new Pool({
   },
 });
 
-// Default export handler function for Vercel
-export default async function handler(req, res) {
+export default async (req, res) => { // Changed from module.exports to export default
   const { method, query } = req;
 
   try {
@@ -60,6 +58,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('API error:', err);
-    return res.status(500).json({ error: 'Internal server1 error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
