@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 const { Pool } = require('pg'); // Reverted to require()
 
 // PostgreSQL connection pool
