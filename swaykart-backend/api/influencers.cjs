@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { Pool } from 'pg'; // Changed from require() to import
+const { Pool } = require('pg'); // Reverted to require()
 
 // PostgreSQL connection pool
 const pool = new Pool({
@@ -13,7 +13,7 @@ const pool = new Pool({
   },
 });
 
-export default async (req, res) => { // Changed from module.exports to export default
+module.exports = async (req, res) => { // Reverted to module.exports
   const { method, query } = req;
 
   try {
