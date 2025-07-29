@@ -29,7 +29,7 @@ function App() {
     const fetchInfluencers = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5001/api/influencers');
+        const response = await fetch('https://vis-inf-backend.vercel.app/api/influencers');
         const data = await response.json();
         setInfluencers(data);
       } catch {
@@ -47,7 +47,7 @@ function App() {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch(`http://localhost:5001/api/influencer/${id}`);
+      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencer/${id}`);
       const data = await response.json();
       setSelectedInfluencer(data);
       setShowInput(false);
