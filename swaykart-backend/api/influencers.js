@@ -1,4 +1,5 @@
-// api/influencer.js
+// File: swaykart-backend/api/influencers.js
+
 import { Pool } from 'pg';
 
 const pool = new Pool({
@@ -6,7 +7,7 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT || '5432', 10),
+  port: process.env.DB_PORT,
   ssl: {
     rejectUnauthorized: false,
   },
@@ -16,11 +17,15 @@ export default async function handler(req, res) {
   const { method, query } = req;
 
   try {
+    // ✅ GET /api/influencers → fetch all influencers
     if (method === 'GET' && !query.id) {
-      const result = await pool.query('SELECT id, username FROM scrapped.instagram_profile_analysis');
+      const result = await pool.query(
+        'SELECT id, username FROM scrapped.instagram_profile_analysis'
+      );
       return res.status(200).json(result.rows);
     }
 
+    // ✅ GET /api/influencers?id=123 → fetch specific influencer
     if (method === 'GET' && query.id) {
       const result = await pool.query(
         'SELECT * FROM scrapped.instagram_profile_analysis WHERE id = $1',
@@ -33,6 +38,7 @@ export default async function handler(req, res) {
 
       const influencer = result.rows[0];
 
+      // Parse AI analysis safely if it's wrapped in markdown
       if (influencer.ai_analysis && influencer.ai_analysis.startsWith('```json')) {
         try {
           const jsonString = influencer.ai_analysis
@@ -40,17 +46,18 @@ export default async function handler(req, res) {
             .replace(/\s*```$/, '');
           influencer.ai_analysis = JSON.parse(jsonString);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
+          console.error('Error parsing AI analysis:', parseError);
         }
       }
 
       return res.status(200).json(influencer);
     }
 
+    // ❌ Unsupported method
     return res.status(405).json({ error: 'Method not allowed' });
 
   } catch (err) {
-    console.error('API Error:', err);
+    console.error('API error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
