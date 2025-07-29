@@ -37,20 +37,63 @@ function InfluencerDashboard() {
   useEffect(() => {
     if (selectedInfluencer) {
       document.title = `@${selectedInfluencer.username} Analytics | Influencer Dashboard`;
+      
+      // Update meta description
       const metaDescription = document.querySelector('meta[name="description"]');
       if (metaDescription) {
-        metaDescription.content = `Comprehensive analytics and insights for influencer @${selectedInfluencer.username}`;
+        metaDescription.content = `Comprehensive analytics and insights for influencer @${selectedInfluencer.username}. View engagement rates, content analysis, and brand safety metrics.`;
+      } else {
+        // Create meta description if it doesn't exist
+        const meta = document.createElement('meta');
+        meta.name = 'description';
+        meta.content = `Comprehensive analytics and insights for influencer @${selectedInfluencer.username}. View engagement rates, content analysis, and brand safety metrics.`;
+        document.getElementsByTagName('head')[0].appendChild(meta);
       }
       
       // Set canonical URL
-      const canonicalLink = document.querySelector('link[rel="canonical"]');
-      if (canonicalLink) {
-        canonicalLink.href = `https://yourdomain.com/${selectedInfluencer.username}`;
+      let canonicalLink = document.querySelector('link[rel="canonical"]');
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.rel = 'canonical';
+        document.getElementsByTagName('head')[0].appendChild(canonicalLink);
       }
+      canonicalLink.href = `${window.location.origin}/${selectedInfluencer.username.toLowerCase()}`;
+      
+      // Set Open Graph tags for social sharing
+      updateMetaTag('og:title', `@${selectedInfluencer.username} Analytics | Influencer Dashboard`);
+      updateMetaTag('og:description', `Comprehensive analytics for influencer @${selectedInfluencer.username}`);
+      updateMetaTag('og:url', `${window.location.origin}/${selectedInfluencer.username.toLowerCase()}`);
+      updateMetaTag('og:type', 'website');
+      
+      // Set Twitter Card tags
+      updateMetaTag('twitter:card', 'summary_large_image');
+      updateMetaTag('twitter:title', `@${selectedInfluencer.username} Analytics`);
+      updateMetaTag('twitter:description', `Analytics dashboard for @${selectedInfluencer.username}`);
+      
     } else {
-      document.title = 'Influencer Analytics Dashboard';
+      document.title = 'Influencer Analytics Dashboard | Comprehensive Social Media Analytics';
+      
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.content = 'Professional influencer analytics dashboard with comprehensive insights, engagement metrics, content analysis, and brand safety assessment.';
+      }
     }
   }, [selectedInfluencer]);
+
+  // Helper function to update meta tags
+  const updateMetaTag = (property, content) => {
+    let metaTag = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
+    if (!metaTag) {
+      metaTag = document.createElement('meta');
+      if (property.startsWith('og:') || property.startsWith('twitter:')) {
+        metaTag.setAttribute('property', property);
+      } else {
+        metaTag.setAttribute('name', property);
+      }
+      document.getElementsByTagName('head')[0].appendChild(metaTag);
+    }
+    metaTag.setAttribute('content', content);
+  };
 
   // Fetch all influencers on component mount
   useEffect(() => {
@@ -58,18 +101,21 @@ function InfluencerDashboard() {
       try {
         setLoading(true);
         const response = await fetch('https://vis-inf-backend.vercel.app/api/influencers');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         setInfluencers(data);
         
-        // If there's a username in the URL, find and fetch that influencer
+        // If there's a username in the URL, fetch that influencer directly
         if (username) {
-          const influencer = data.find(i => i.username.toLowerCase() === username.toLowerCase());
-          if (influencer) {
-            fetchInfluencerDetails(influencer.id, influencer.username);
-          }
+          await fetchInfluencerByUsername(username);
         }
-      } catch {
-        setError('Failed to fetch influencers');
+      } catch (err) {
+        console.error('Error fetching influencers:', err);
+        setError('Failed to fetch influencers. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -78,18 +124,65 @@ function InfluencerDashboard() {
     fetchInfluencers();
   }, [username]);
 
-  // Fetch influencer details when selected
-  const fetchInfluencerDetails = async (id, influencerUsername) => {
+  // Fetch influencer by username directly from backend
+  const fetchInfluencerByUsername = async (usernameParam) => {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencers?id=${id}`);
+      
+      // Use the username parameter to fetch directly from backend
+      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencers?username=${encodeURIComponent(usernameParam)}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError(`Influencer @${usernameParam} not found`);
+          navigate('/', { replace: true });
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       setSelectedInfluencer(data);
       setShowInput(false);
-      navigate(`/${influencerUsername.toLowerCase()}`, { replace: true }); // Update URL with lowercase username
-    } catch {
-      setError('Failed to fetch influencer details');
+      
+      // Ensure URL is consistent with actual username from backend
+      const actualUsername = data.username.toLowerCase();
+      if (usernameParam.toLowerCase() !== actualUsername) {
+        navigate(`/${actualUsername}`, { replace: true });
+      }
+      
+    } catch (err) {
+      console.error('Error fetching influencer by username:', err);
+      setError(`Failed to fetch influencer @${usernameParam}. Please try again later.`);
+      navigate('/', { replace: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch influencer details when selected from list
+  const fetchInfluencerDetails = async (id) => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencers?id=${id}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setSelectedInfluencer(data);
+      setShowInput(false);
+      
+      // Navigate to username-based URL
+      navigate(`/${data.username.toLowerCase()}`, { replace: true });
+      
+    } catch (err) {
+      console.error('Error fetching influencer details:', err);
+      setError('Failed to fetch influencer details. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -99,7 +192,8 @@ function InfluencerDashboard() {
     setShowInput(true);
     setSelectedInfluencer(null);
     setActiveTab('overview');
-    navigate('/');
+    setError('');
+    navigate('/', { replace: true });
   };
 
   const handleInfluencerClick = (influencer) => {
