@@ -47,12 +47,26 @@ function App() {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencer?id=${id}`);
+      
+      // Use ONLY this endpoint format
+      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencers?id=${id}`, {
+        mode: 'cors', // explicitly request CORS
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
       setSelectedInfluencer(data);
-      setShowInput(false);
-    } catch {
-      setError('Failed to fetch influencer details');
+      
+    } catch (err) {
+      console.error('Fetch failed:', err);
+      setError(`Failed to load: ${err.message}`);
     } finally {
       setLoading(false);
     }
