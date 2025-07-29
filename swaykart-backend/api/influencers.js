@@ -1,3 +1,4 @@
+// api/influencer.js
 import { Pool } from 'pg';
 
 const pool = new Pool({
@@ -5,7 +6,7 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  port: parseInt(process.env.DB_PORT || '5432', 10),
   ssl: {
     rejectUnauthorized: false,
   },
@@ -21,7 +22,10 @@ export default async function handler(req, res) {
     }
 
     if (method === 'GET' && query.id) {
-      const result = await pool.query('SELECT * FROM scrapped.instagram_profile_analysis WHERE id = $1', [query.id]);
+      const result = await pool.query(
+        'SELECT * FROM scrapped.instagram_profile_analysis WHERE id = $1',
+        [query.id]
+      );
 
       if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Influencer not found' });
@@ -31,7 +35,9 @@ export default async function handler(req, res) {
 
       if (influencer.ai_analysis && influencer.ai_analysis.startsWith('```json')) {
         try {
-          const jsonString = influencer.ai_analysis.replace(/```json\s*/, '').replace(/\s*```$/, '');
+          const jsonString = influencer.ai_analysis
+            .replace(/```json\s*/, '')
+            .replace(/\s*```$/, '');
           influencer.ai_analysis = JSON.parse(jsonString);
         } catch (parseError) {
           console.error('JSON parse error:', parseError);
