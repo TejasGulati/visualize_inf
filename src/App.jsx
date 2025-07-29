@@ -143,7 +143,7 @@ function InfluencerDashboard() {
       }
       
       const data = await response.json();
-      setSelectedInfluencer(data);
+      setSelectedInfluencer(data); // FIX: Use the object directly
       setShowInput(false);
       
       // Ensure URL is consistent with actual username from backend
