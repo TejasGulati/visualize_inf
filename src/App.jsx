@@ -1,18 +1,27 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useMemo, useEffect } from 'react';
 import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useParams,
+  useNavigate
+} from 'react-router-dom';
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 
-function App() {
+function InfluencerDashboard() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [influencers, setInfluencers] = useState([]);
   const [selectedInfluencer, setSelectedInfluencer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [showInput, setShowInput] = useState(false);
-  const [isLocked, setIsLocked] = useState(true); // New state for lock/unlock
+  const [isLocked, setIsLocked] = useState(true);
 
   // Modern color theme
   const COLORS = {
@@ -32,6 +41,11 @@ function App() {
         const response = await fetch('https://vis-inf-backend.vercel.app/api/influencers');
         const data = await response.json();
         setInfluencers(data);
+        
+        // If there's an ID in the URL, fetch that influencer
+        if (id) {
+          fetchInfluencerDetails(id);
+        }
       } catch {
         setError('Failed to fetch influencers');
       } finally {
@@ -40,7 +54,7 @@ function App() {
     };
 
     fetchInfluencers();
-  }, []);
+  }, [id]);
 
   // Fetch influencer details when selected
   const fetchInfluencerDetails = async (id) => {
@@ -51,6 +65,7 @@ function App() {
       const data = await response.json();
       setSelectedInfluencer(data);
       setShowInput(false);
+      navigate(`/${id}`); // Update the URL
     } catch {
       setError('Failed to fetch influencer details');
     } finally {
@@ -62,6 +77,7 @@ function App() {
     setShowInput(true);
     setSelectedInfluencer(null);
     setActiveTab('overview');
+    navigate('/'); // Clear the influencer ID from URL
   };
 
   // Safe data access helpers
@@ -140,7 +156,7 @@ function App() {
     </button>
   );
 
-  // Locked Content Overlay Component - Fixed to prevent overflow
+  // Locked Content Overlay Component
   const LockedOverlay = ({ children, title = "Premium Content" }) => (
     <div className="relative w-full h-full">
       <div className={`${isLocked ? 'filter blur-sm pointer-events-none' : ''} transition-all duration-300 w-full h-full`}>
@@ -209,13 +225,12 @@ function App() {
       highlight: 'bg-emerald-600 border-emerald-500',
       green: 'bg-emerald-600 border-emerald-500',
       red: 'bg-red-600 border-red-500',
-
       navy: 'bg-[#0D1B3E] border-[#0D1B3E] text-white',
       blue: 'bg-[#2A7DFF] border-[#2A7DFF] text-white',
       pink: 'bg-[#FF5A9E] border-[#FF5A9E] text-white',
       yellow: 'bg-[#F49A1A] border-[#F49A1A] text-white',
-      teal: 'bg-[#007D8A] border-[#007D8A] text-white', // replaces lightBlue
-      gray: 'bg-[#F7F7F7] border-[#F7F7F7] text-black', // also light
+      teal: 'bg-[#007D8A] border-[#007D8A] text-white',
+      gray: 'bg-[#F7F7F7] border-[#F7F7F7] text-black',
     };
 
     return (
@@ -279,38 +294,37 @@ function App() {
             </div>
           }>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
-  <StatCard
-    title="Followers"
-    value={formatNumber(safeGet(data, 'ai_analysis.profile_analysis.profile_summary.follower_count', 'N/A'))}
-    icon={PeopleIcon}
-    color="navy"
-  />
-  <StatCard
-    title="Account Tier"
-    value={safeGet(data, 'account_tier', 'N/A')}
-    icon={TierIcon}
-    color="pink"
-  />
-  <StatCard
-    title="Engagement Rate"
-    value={safeGet(data, 'robust_tier_adjusted_engagement_rate', 'N/A') + '%'}
-    icon={EngagementIcon}
-    color="yellow"
-  />
-  <StatCard
-    title="Credibility Score"
-    value={safeGet(data, 'credibility_score.value', 'N/A') + '/10'}
-    icon={CredibilityIcon}
-    color="blue"
-  />
-  <StatCard
-    title="Total Posts"
-    value={safeGet(data, 'total_posts_analyzed', 'N/A')}
-    icon={PostsIcon}
-    color="teal"
-  />
-</div>
-
+              <StatCard
+                title="Followers"
+                value={formatNumber(safeGet(data, 'ai_analysis.profile_analysis.profile_summary.follower_count', 'N/A'))}
+                icon={PeopleIcon}
+                color="navy"
+              />
+              <StatCard
+                title="Account Tier"
+                value={safeGet(data, 'account_tier', 'N/A')}
+                icon={TierIcon}
+                color="pink"
+              />
+              <StatCard
+                title="Engagement Rate"
+                value={safeGet(data, 'robust_tier_adjusted_engagement_rate', 'N/A') + '%'}
+                icon={EngagementIcon}
+                color="yellow"
+              />
+              <StatCard
+                title="Credibility Score"
+                value={safeGet(data, 'credibility_score.value', 'N/A') + '/10'}
+                icon={CredibilityIcon}
+                color="blue"
+              />
+              <StatCard
+                title="Total Posts"
+                value={safeGet(data, 'total_posts_analyzed', 'N/A')}
+                icon={PostsIcon}
+                color="teal"
+              />
+            </div>
 
             {/* Value Proposition */}
             {safeGet(data, 'ai_analysis.executive_summary.value_proposition') && (
@@ -732,55 +746,54 @@ function App() {
         ) : (
           <div>
             {/* Profile Section - Always Visible with Lock Toggle */}
-<div className="text-center mb-10">
-  <div className="relative inline-block mb-5">
-    <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 flex items-center justify-center text-white text-2xl sm:text-4xl font-extrabold shadow-xl border-4 border-white mx-auto">
-      {safeGet(selectedInfluencer, 'username', 'U')?.charAt(0).toUpperCase()}
-    </div>
-    {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.profile_summary.is_verified') && (
-      <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1.5 border-4 border-white shadow-md">
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-    )}
-  </div>
+            <div className="text-center mb-10">
+              <div className="relative inline-block mb-5">
+                <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 flex items-center justify-center text-white text-2xl sm:text-4xl font-extrabold shadow-xl border-4 border-white mx-auto">
+                  {safeGet(selectedInfluencer, 'username', 'U')?.charAt(0).toUpperCase()}
+                </div>
+                {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.profile_summary.is_verified') && (
+                  <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1.5 border-4 border-white shadow-md">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
 
-  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 tracking-wide">
-    @{safeGet(selectedInfluencer, 'username', 'unknown')}
-  </h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 tracking-wide">
+                @{safeGet(selectedInfluencer, 'username', 'unknown')}
+              </h2>
 
-  {/* Minimal Location & Category Headings */}
-  <div className="flex justify-center gap-8 sm:gap-12 mb-6">
-    {/* Top Locations */}
-    <div className="text-center px-3 py-2 bg-purple-50 rounded-xl shadow-sm">
-      <h3 className="text-[10px] uppercase tracking-widest text-purple-700 font-semibold mb-1">Top Locations</h3>
-      <p className="text-sm font-medium text-purple-900">
-        {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.content_analysis.geo_analysis.locations', [])
-          .slice(0, 2)
-          .map(loc => loc.name.split(',')[0])
-          .join(', ')}
-      </p>
-    </div>
+              {/* Minimal Location & Category Headings */}
+              <div className="flex justify-center gap-8 sm:gap-12 mb-6">
+                {/* Top Locations */}
+                <div className="text-center px-3 py-2 bg-purple-50 rounded-xl shadow-sm">
+                  <h3 className="text-[10px] uppercase tracking-widest text-purple-700 font-semibold mb-1">Top Locations</h3>
+                  <p className="text-sm font-medium text-purple-900">
+                    {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.content_analysis.geo_analysis.locations', [])
+                      .slice(0, 2)
+                      .map(loc => loc.name.split(',')[0])
+                      .join(', ')}
+                  </p>
+                </div>
 
-    {/* Top Categories */}
-    <div className="text-center px-3 py-2 bg-pink-50 rounded-xl shadow-sm">
-      <h3 className="text-[10px] uppercase tracking-widest text-pink-700 font-semibold mb-1">Top Categories</h3>
-      <p className="text-sm font-medium text-pink-900">
-        {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.content_analysis.primary_categories', [])
-          .slice(0, 3)
-          .map(cat => cat.name)
-          .join(', ')}
-      </p>
-    </div>
-  </div>
+                {/* Top Categories */}
+                <div className="text-center px-3 py-2 bg-pink-50 rounded-xl shadow-sm">
+                  <h3 className="text-[10px] uppercase tracking-widest text-pink-700 font-semibold mb-1">Top Categories</h3>
+                  <p className="text-sm font-medium text-pink-900">
+                    {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.content_analysis.primary_categories', [])
+                      .slice(0, 3)
+                      .map(cat => cat.name)
+                      .join(', ')}
+                  </p>
+                </div>
+              </div>
 
-  {/* Lock/Unlock Toggle Button */}
-  <div className="flex justify-center mt-2">
-    <LockToggle />
-  </div>
-</div>
-
+              {/* Lock/Unlock Toggle Button */}
+              <div className="flex justify-center mt-2">
+                <LockToggle />
+              </div>
+            </div>
 
             {/* Tabs */}
             {renderTabs()}
@@ -825,6 +838,17 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<InfluencerDashboard />} />
+        <Route path="/:id" element={<InfluencerDashboard />} />
+      </Routes>
+    </Router>
   );
 }
 
