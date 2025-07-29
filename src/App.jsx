@@ -47,7 +47,7 @@ function App() {
     try {
       setLoading(true);
       setError('');
-      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencer/${id}`);
+      const response = await fetch(`https://vis-inf-backend.vercel.app/api/influencer?id=${id}`);
       const data = await response.json();
       setSelectedInfluencer(data);
       setShowInput(false);
