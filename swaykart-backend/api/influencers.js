@@ -1,7 +1,8 @@
-// File: swaykart-backend/api/influencers.js
+// Importing with ESM syntax
+import pg from 'pg';
+const { Pool } = pg;
 
-import { Pool } from 'pg';
-
+// PostgreSQL connection pool
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -13,6 +14,7 @@ const pool = new Pool({
   },
 });
 
+// Default export handler function for Vercel
 export default async function handler(req, res) {
   const { method, query } = req;
 
@@ -58,6 +60,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('API error:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server1 error' });
   }
 }
