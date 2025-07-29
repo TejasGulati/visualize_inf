@@ -732,28 +732,55 @@ function App() {
         ) : (
           <div>
             {/* Profile Section - Always Visible with Lock Toggle */}
-            <div className="text-center mb-8">
-              <div className="relative inline-block mb-4">
-                <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white text-2xl sm:text-4xl font-extrabold shadow-2xl border-4 border-white mx-auto">
-                  {safeGet(selectedInfluencer, 'username', 'U')?.charAt(0).toUpperCase()}
-                </div>
-                {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.profile_summary.is_verified') && (
-                  <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1.5 border-3 border-white shadow-lg">
-                    <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-700 mb-4">
-                @{safeGet(selectedInfluencer, 'username', 'unknown')}
-              </h2>
-              
-              {/* Lock/Unlock Toggle Button */}
-              <div className="flex justify-center mb-6">
-                <LockToggle />
-              </div>
-            </div>
+<div className="text-center mb-10">
+  <div className="relative inline-block mb-5">
+    <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 flex items-center justify-center text-white text-2xl sm:text-4xl font-extrabold shadow-xl border-4 border-white mx-auto">
+      {safeGet(selectedInfluencer, 'username', 'U')?.charAt(0).toUpperCase()}
+    </div>
+    {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.profile_summary.is_verified') && (
+      <div className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-1.5 border-4 border-white shadow-md">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+    )}
+  </div>
+
+  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-3 tracking-wide">
+    @{safeGet(selectedInfluencer, 'username', 'unknown')}
+  </h2>
+
+  {/* Minimal Location & Category Headings */}
+  <div className="flex justify-center gap-8 sm:gap-12 mb-6">
+    {/* Top Locations */}
+    <div className="text-center px-3 py-2 bg-purple-50 rounded-xl shadow-sm">
+      <h3 className="text-[10px] uppercase tracking-widest text-purple-700 font-semibold mb-1">Top Locations</h3>
+      <p className="text-sm font-medium text-purple-900">
+        {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.content_analysis.geo_analysis.locations', [])
+          .slice(0, 2)
+          .map(loc => loc.name.split(',')[0])
+          .join(', ')}
+      </p>
+    </div>
+
+    {/* Top Categories */}
+    <div className="text-center px-3 py-2 bg-pink-50 rounded-xl shadow-sm">
+      <h3 className="text-[10px] uppercase tracking-widest text-pink-700 font-semibold mb-1">Top Categories</h3>
+      <p className="text-sm font-medium text-pink-900">
+        {safeGet(selectedInfluencer, 'ai_analysis.profile_analysis.content_analysis.primary_categories', [])
+          .slice(0, 3)
+          .map(cat => cat.name)
+          .join(', ')}
+      </p>
+    </div>
+  </div>
+
+  {/* Lock/Unlock Toggle Button */}
+  <div className="flex justify-center mt-2">
+    <LockToggle />
+  </div>
+</div>
+
 
             {/* Tabs */}
             {renderTabs()}
