@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 
 function InfluencerDashboard() {
-  const { id } = useParams();
+  const { username } = useParams();
   const navigate = useNavigate();
   const [influencers, setInfluencers] = useState([]);
   const [selectedInfluencer, setSelectedInfluencer] = useState(null);
@@ -33,6 +33,25 @@ function InfluencerDashboard() {
     background: '#FFFFFF'
   };
 
+  // Set document title and meta tags for SEO
+  useEffect(() => {
+    if (selectedInfluencer) {
+      document.title = `@${selectedInfluencer.username} Analytics | Influencer Dashboard`;
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.content = `Comprehensive analytics and insights for influencer @${selectedInfluencer.username}`;
+      }
+      
+      // Set canonical URL
+      const canonicalLink = document.querySelector('link[rel="canonical"]');
+      if (canonicalLink) {
+        canonicalLink.href = `https://yourdomain.com/${selectedInfluencer.username}`;
+      }
+    } else {
+      document.title = 'Influencer Analytics Dashboard';
+    }
+  }, [selectedInfluencer]);
+
   // Fetch all influencers on component mount
   useEffect(() => {
     const fetchInfluencers = async () => {
@@ -42,9 +61,12 @@ function InfluencerDashboard() {
         const data = await response.json();
         setInfluencers(data);
         
-        // If there's an ID in the URL, fetch that influencer
-        if (id) {
-          fetchInfluencerDetails(id);
+        // If there's a username in the URL, find and fetch that influencer
+        if (username) {
+          const influencer = data.find(i => i.username.toLowerCase() === username.toLowerCase());
+          if (influencer) {
+            fetchInfluencerDetails(influencer.id, influencer.username);
+          }
         }
       } catch {
         setError('Failed to fetch influencers');
@@ -54,10 +76,10 @@ function InfluencerDashboard() {
     };
 
     fetchInfluencers();
-  }, [id]);
+  }, [username]);
 
   // Fetch influencer details when selected
-  const fetchInfluencerDetails = async (id) => {
+  const fetchInfluencerDetails = async (id, influencerUsername) => {
     try {
       setLoading(true);
       setError('');
@@ -65,7 +87,7 @@ function InfluencerDashboard() {
       const data = await response.json();
       setSelectedInfluencer(data);
       setShowInput(false);
-      navigate(`/${id}`); // Update the URL
+      navigate(`/${influencerUsername.toLowerCase()}`, { replace: true }); // Update URL with lowercase username
     } catch {
       setError('Failed to fetch influencer details');
     } finally {
@@ -77,7 +99,11 @@ function InfluencerDashboard() {
     setShowInput(true);
     setSelectedInfluencer(null);
     setActiveTab('overview');
-    navigate('/'); // Clear the influencer ID from URL
+    navigate('/');
+  };
+
+  const handleInfluencerClick = (influencer) => {
+    fetchInfluencerDetails(influencer.id, influencer.username);
   };
 
   // Safe data access helpers
@@ -687,7 +713,7 @@ function InfluencerDashboard() {
             <div
               key={influencer.id}
               className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-300 cursor-pointer group"
-              onClick={() => fetchInfluencerDetails(influencer.id)}
+              onClick={() => handleInfluencerClick(influencer)}
             >
               <div className="flex items-center">
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-white shadow-lg rounded-2xl w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-lg sm:text-xl font-bold text-white flex-shrink-0">
@@ -695,7 +721,6 @@ function InfluencerDashboard() {
                 </div>
                 <div className="ml-3 sm:ml-4 flex-1 min-w-0">
                   <h4 className="font-bold text-base sm:text-lg text-gray-900 group-hover:text-indigo-600 transition-colors truncate">@{influencer.username}</h4>
-                  <p className="text-xs sm:text-sm text-gray-500">ID: {influencer.id}</p>
                 </div>
               </div>
             </div>
@@ -846,7 +871,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<InfluencerDashboard />} />
-        <Route path="/:id" element={<InfluencerDashboard />} />
+        <Route path="/:username" element={<InfluencerDashboard />} />
       </Routes>
     </Router>
   );
